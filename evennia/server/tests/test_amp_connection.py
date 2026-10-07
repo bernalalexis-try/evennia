@@ -158,3 +158,21 @@ class TestAMPClientRecv(_TestAMP):
         # the real (server) connection is reached, the launcher is skipped
         server_conn.callRemote.assert_called_once()
         launcher_conn.callRemote.assert_not_called()
+
+
+class _CustomClientProtocol(amp_client.AMPServerClientProtocol):
+    pass
+
+
+class TestAMPClientFactoryProtocolClass(TestCase):
+    @patch(
+        "evennia.server.amp_client.settings.AMP_CLIENT_PROTOCOL_CLASS",
+        "evennia.server.tests.test_amp_connection._CustomClientProtocol",
+    )
+    def test_build_protocol_uses_setting(self):
+        server = MagicMock()
+        factory = amp_client.AMPClientFactory(server)
+        protocol = factory.buildProtocol("127.0.0.1")
+        self.assertIsInstance(protocol, _CustomClientProtocol)
+        self.assertIs(server.amp_protocol, protocol)
+        self.assertIs(protocol.factory, factory)
